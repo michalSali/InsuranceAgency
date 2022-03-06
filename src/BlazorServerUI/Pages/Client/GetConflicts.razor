@@ -1,0 +1,52 @@
+﻿@attribute [Authorize(Roles = "Client")]
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+@using BLL.Facades.Conflict
+@using BlazorServerUI.Authentication.Utility
+@using BLL.DTOs.Objects.Conflict
+@using BLL.DTOs.Objects.ConflictRecord
+
+
+<MudTable Items="conflictRecords" Style="padding: 0px 20px" Hover="true" Dense="true" FixedHeader="true">
+    <HeaderContent>
+        <MudTh>Date</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Balance Change</MudTh>
+        <MudTh>Conflict</MudTh>
+        <MudTh>Location</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Date">@context.Date</MudTd>
+        <MudTd DataLabel="Description">@(string.IsNullOrEmpty(context.Description) ? "Unknown" : context.Description)</MudTd>
+        <MudTd DataLabel="Balance Change">@context.BalanceChange</MudTd>
+        <MudTd DataLabel="Conflict">@(string.IsNullOrEmpty(context.Conflict.Name) ? "Unknown" : context.Conflict.Name)</MudTd>
+        <MudTd DataLabel="Location">@(string.IsNullOrEmpty(context.Conflict.Location) ? "Unknown" : context.Conflict.Location)</MudTd>
+    </RowTemplate>
+</MudTable>
+
+
+@inject IClientFacade _clientFacade
+@inject IConflictFacade _conflictFacade
+@code {
+
+    private int id;
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    ClientGetDTO user = new ClientGetDTO();
+    List<ConflictRecordGetDTO> conflictRecords;    
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        await refreshUserDataAsync();
+    }
+
+    private async Task refreshUserDataAsync()
+    {       
+        conflictRecords = (await _conflictFacade.GetAllRecordsWithParticipantIdSorted(id)).ToList();        
+    }
+
+}

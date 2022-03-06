@@ -1,0 +1,62 @@
+﻿@attribute [Authorize(Roles = "Client")]
+@using BLL.DTOs.People.Client
+@using BLL.DTOs.People.InsuranceAgent
+@using BLL.DTOs.People.User
+@using BLL.Facades.Client
+@using BLL.Facades.InsuranceAgent
+@using BLL.Facades.Insurance
+@using BLL.DTOs.Objects.Insurance
+@using BlazorServerUI.Authentication.Utility
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h6">Insurance Agent: @agentName</MudText>
+
+<MudTable Style="padding: 0px 20px" Items="insurances" Hover="true" Dense="true" FixedHeader="true">
+    <HeaderContent>
+        <MudTh>Creation date</MudTh>
+        <MudTh>Expiration date</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Approved</MudTh>
+        <MudTh>Declined</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Creation date">@context.CreationDate</MudTd>
+        <MudTd DataLabel="Expiration date">@context.ExpirationDate</MudTd>
+        <MudTd DataLabel="Description">@(string.IsNullOrEmpty(context.InsuranceOffer?.Description) ? "Insurance #" + context.InsuranceOffer.Id : context.InsuranceOffer.Description) </MudTd>
+        <MudTd DataLabel="Approved">@context.Approved</MudTd>
+        <MudTd DataLabel="Declined">@context.Declined</MudTd>
+    </RowTemplate>
+</MudTable>
+
+
+@inject IClientFacade _clientFacade
+@inject IInsuranceAgentFacade _insuranceAgentFacade
+@inject IInsuranceFacade _insuranceFacade
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    string agentName = "";
+
+    ClientGetDTO user = new ClientGetDTO();
+    List<InsuranceGetDTO> insurances;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        await RefreshUserDataAsync();
+    }
+
+    private async Task RefreshUserDataAsync()
+    {
+        var person = await _clientFacade.GetWithExtendedInfoAsync(id);
+        var agent = await _insuranceAgentFacade.GetWithIncludesAsync(person.InsuranceAgentInfo.Id);
+        insurances = (await _insuranceFacade.GetAllInsurancesWithIncludesAsync(person.Id)).ToList();
+        agentName = agent.UserInfo.Name;
+    }
+
+}

@@ -1,0 +1,82 @@
+﻿@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.Gear
+@using BLL.Facades.Client
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h5">Gear Manager</MudText>
+
+<MudTable MultiSelection="false" Items="@GearCollection" @bind-SelectedItem="@selectedItem" Hover="true" SortLabel="Sort By" CommitEditTooltip="Commit Edit" OnCommitEditClick="@updateGear">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Gear Type</MudTh>
+        <MudTh>Value</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@(string.IsNullOrEmpty(context.Name) ? "Default " + context.Type.ToString() : context.Name)</MudTd>
+        <MudTd DataLabel="Gear Type">@context.Type</MudTd>
+        <MudTd DataLabel="Value">@context.Value</MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Name" />
+        </MudTd>
+        <MudTd> @context.Type </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Value" />
+        </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+<MudGrid>
+    <MudItem xs="12">
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5" Inline="true">Selected: @selectedItem?.Name</MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="deleteGear">Delete Selected Gear</MudButton>
+    </MudItem>
+</MudGrid>
+
+@inject ISnackbar Snackbar
+@inject IClientFacade _clientFacade
+@code {
+    [Parameter]
+    public ClientGetDTO Client { get; set; }
+
+    public IEnumerable<GearGetDTO> GearCollection { get; set; }
+
+    private HashSet<GearGetDTO> selectedGear = new HashSet<GearGetDTO>();
+    private GearGetDTO selectedItem = null;
+
+
+
+    protected override void OnInitialized()
+    {
+        GearCollection = Client.Gears;
+    }
+
+    private async Task deleteGear()
+    {
+        var selectedItemId = selectedItem.Id;
+        var selectedItemName = selectedItem.Name;
+        await _clientFacade.DeleteGearAsync(selectedItem.Id);
+        GearCollection = GearCollection.Where(item => item.Id != selectedItemId).ToList();
+        selectedItem = null;
+        Snackbar.Add("Gear " + selectedItemName + " deleted");
+    }
+
+    private async Task updateGear()
+    {
+        var updateGear = new GearUpdateDTO()
+        {
+            ClientId = selectedItem.ClientId,
+            Id = selectedItem.Id,
+            Name = selectedItem.Name,
+            Type = selectedItem.Type,
+            Value = selectedItem.Value
+        };
+        await _clientFacade.UpdateGearAsync(updateGear);
+        Snackbar.Add("Gear " + selectedItem.Name + " updated");
+    }
+}

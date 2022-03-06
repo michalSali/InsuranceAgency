@@ -1,0 +1,74 @@
+﻿@page "/addClientUser"
+@attribute [Authorize(Roles = "InsuranceAgent")]
+@using BLL.DTOs.People.User
+@using BLL.DTOs.Enums
+@using BLL.DTOs.People.Administrator
+@using BLL.DTOs.People.Director
+@using BLL.DTOs.People.InsuranceAgent
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@namespace BlazorServerUI.Pages
+
+@inject BLL.Facades.User.IUserManagementFacade _facade
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h4">Add New User</MudText>
+
+<MudGrid Spacing="4" Style="padding: 0px 20px">
+
+    <MudItem xs="6">
+        <MudTextField @bind-Value="Name" Label="Name" Variant="Variant.Text"></MudTextField>
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudDatePicker @bind-Value="BirthDateTime" Label="Birth date" />
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudSelect T="Gender" @bind-Value="UserGender" Label="Gender">
+            @foreach (Gender item in Enum.GetValues(typeof(Gender)))
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudTextField @bind-Value="Password" Label="Password" InputType="MudBlazor.InputType.Password" Variant="Variant.Text" />
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="3"><MudText>Role</MudText></MudItem>
+    <MudItem xs="3"> <MudCheckBox @bind-Checked="@Label_isClient" Label="Client" Color="Color.Primary"></MudCheckBox></MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6"><MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AddPersonAsync">Add user</MudButton></MudItem>
+
+    
+</MudGrid>
+
+@code {
+
+
+    private string Name { get; set; }
+    private string BirthDateTime { get; set; }
+    private Gender UserGender { get; set; }
+    private string Password { get; set; }
+    private bool Label_isClient { get; set; }
+
+
+    UserInfoDTO createdUser;
+
+    public async Task AddPersonAsync()
+    {
+        if (Name != null && BirthDateTime != null)
+        {
+            var person = new UserRegisterDTO() { Name = Name, Birth = Convert.ToDateTime(BirthDateTime), Gender = UserGender, Password = Password };
+            createdUser = await _facade.RegisterAsync(person);
+        }
+
+        if (Label_isClient)
+        {
+            var adminDto = new AdministratorCreateDTO();
+            adminDto.UserId = createdUser.Id;
+            await _facade.AddRoleAsync(adminDto);
+        }
+    }
+
+}

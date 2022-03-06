@@ -1,0 +1,36 @@
+@page "/getAllUsers"
+@attribute [Authorize(Roles="Administrator")]
+
+@using BLL.DTOs.People.User
+@using BLL.Facades.User
+@using BlazorServerUI.Pages.User
+
+<h5> All Users </h5>
+@if (users == null)
+{
+    <p> Loading.. </p>
+}
+else
+{
+    <ShowUsers Users="@users"/>
+}
+
+@inject IUserManagementFacade _facade;
+@code {
+    
+    private List<UserInfoDTO> users;
+    private async Task refreshUserDataAsync()
+    {
+        users = null;
+        users = (await _facade.GetAllAsync()).ToList();
+
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (users == null)
+        {
+            await refreshUserDataAsync();
+        }
+    }
+}

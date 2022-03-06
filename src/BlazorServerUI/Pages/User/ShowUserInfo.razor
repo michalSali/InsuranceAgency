@@ -1,0 +1,43 @@
+﻿@using BLL.DTOs.People.User
+@namespace BlazorServerUI.Pages
+
+@if (User == null)
+{
+    <p><em>User not found</em></p>
+}
+else
+{
+    <MudGrid Style="padding: 0px 20px;">
+        <MudItem xs="12">
+            <MudText></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5"><b>Name:</b></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5">@User.Name</MudText>
+        </MudItem>
+        <MudItem xs="6">
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5"><b>Birth Date:</b></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5">@User.Birth</MudText>
+        </MudItem>
+        <MudItem xs="6">
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5"><b>Gender:</b></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5">@User.Gender</MudText>
+        </MudItem>
+    </MudGrid>
+}
+
+@code
+{
+    [Parameter]
+    public UserInfoDTO User { get; set; }
+}

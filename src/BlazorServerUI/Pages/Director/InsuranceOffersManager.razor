@@ -1,0 +1,142 @@
+﻿@page "/insuranceOffersManager"
+@attribute [Authorize(Roles = "Director")]
+
+@using BLL.Facades.Insurance
+@using BLL.Facades.Director
+@using BLL.Facades.Client
+@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.InsuranceOffer
+@using AutoMapper
+@using BlazorServerUI.Authentication.Utility
+
+<MudItem xs="12" sm="6" md="4">
+    <MudSelect T="InsuranceOfferGetDTO" Label="InsuranceOffer" @bind-Value="selectedInsuranceOffer" ToStringFunc="insuranceOfferToString" SelectedValuesChanged="refreshClients">
+        @foreach (var offer in InsuranceOffers)
+        {
+            <MudSelectItem Value="@(offer)" />
+        }
+    </MudSelect>
+</MudItem>
+
+<MudButton Color="Color.Primary" OnClick="createOffer" Variant="Variant.Filled">Create Insurance Offer</MudButton>
+
+@if (selectedInsuranceOffer != null)
+{
+    <MudText Typo="Typo.subtitle2" Align="Align.Center">Insurance Offer Information</MudText>
+    <MudSimpleTable>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Creation Date</th>
+                <th>Expiration Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                @if (string.IsNullOrEmpty(selectedInsuranceOffer.Description))
+                {
+                    <td>@("Insurance #" + selectedInsuranceOffer.Id)</td>
+                }
+                else
+                {
+                    <td>@(selectedInsuranceOffer.Description)</td>
+                }
+
+                <td>@(selectedInsuranceOffer.CreationDate)</td>
+                <td>@(selectedInsuranceOffer.ExpirationDate)</td>
+            </tr>
+        </tbody>
+    </MudSimpleTable>
+
+    @if (ShowClients)
+    {
+        <MudText Typo="Typo.subtitle2" Align="Align.Center">Clients With This Insurance</MudText>
+        <MudSimpleTable>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Clients == null || Clients.Count == 0)
+                {
+                    <tr>@("No clients have this insurance.")</tr>
+                }
+                else
+                {
+                    @foreach (var client in Clients)
+                    {
+                        <tr>
+                            <td>@(string.IsNullOrEmpty(client.UserInfo?.Name) ? "Client #" + client.Id : client.UserInfo.Name)</td>
+                        </tr>
+                    }
+                }
+
+            </tbody>
+        </MudSimpleTable>
+    }
+
+    <MudCheckBox @bind-Checked="@ShowClients" Label="Display Clients With This Insurance" Color="Color.Primary" Style="width:100%;" />
+
+    <MudButton Color="Color.Primary" OnClick="deleteOffer" Variant="Variant.Filled">Delete Insurance Offer</MudButton>
+
+}
+
+@inject IDirectorFacade _directorFacade
+@inject IInsuranceFacade  _insuranceFacade
+@inject IClientFacade _clientFacade
+@inject NavigationManager _navManager
+@inject IMapper _mapper
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private int id;
+
+    public InsuranceOfferGetDTO selectedInsuranceOffer { get; set; }
+
+    public List<InsuranceOfferGetDTO> InsuranceOffers { get; set; }
+    public List<ClientGetDTO> Clients { get; set; }
+
+    public bool ShowClients { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        id = CustomClaimsUtility.ExtractClaimsId((await authenticationStateTask).User);
+
+        InsuranceOffers = (await _insuranceFacade.GetAllInsuranceOffersWithIncludesAsync(id)).Where(x => x.ExpirationDate > DateTime.Now).ToList();
+    }
+
+    private string insuranceOfferToString(InsuranceOfferGetDTO offer)
+    {
+        return string.IsNullOrEmpty(offer?.Description) ? "Insurance #" + offer?.Id : offer?.Description;
+    }
+
+    private void createOffer()
+    {
+        _navManager.NavigateTo("/createOffer");
+    }
+
+    private async Task deleteOffer()
+    {
+        selectedInsuranceOffer.ExpirationDate = DateTime.Now;
+        var selectedInsuranceOfferId = selectedInsuranceOffer.Id;
+        bool _ = await _insuranceFacade.UpdateInsuranceOfferAsync(_mapper.Map<InsuranceOfferUpdateDTO>(selectedInsuranceOffer));
+        InsuranceOffers = InsuranceOffers.Where(offer => offer.Id != selectedInsuranceOfferId).ToList();
+        selectedInsuranceOffer = null;
+    }
+
+    private async Task refreshClients()
+    {       
+        var allInsurances = await _insuranceFacade.GetAllInsurancesWithIncludesAsync(null, true);
+        var ids = selectedInsuranceOffer.Insurances.Select(x => x.Id);
+        var filteredInsurances = allInsurances.Where(x => ids.Contains(x.Id));
+        var clientIds = filteredInsurances.Select(x => x.Client.Id);
+
+        var allClients = await _clientFacade.GetAllClientsAsync();
+        Clients = allClients.Where(x => clientIds.Contains(x.Id)).ToList();
+    }
+}

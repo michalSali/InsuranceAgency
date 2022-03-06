@@ -1,0 +1,46 @@
+﻿@attribute [Authorize(Roles="Client")]
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+@using BlazorServerUI.Authentication.Utility
+
+
+<MudTable Style="padding: 0px 20px" Items="@user.Connections" Hover="true" Dense="true" FixedHeader="true">
+    <HeaderContent>
+        <MudTh>Description</MudTh>
+        <MudTh>Object</MudTh>
+        <MudTh>Subject</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Object">@context.Object.UserInfo.Name</MudTd>
+        <MudTd DataLabel="Subject">@context.Subject.UserInfo.Name</MudTd>
+    </RowTemplate>
+</MudTable>
+
+
+@inject IClientFacade _facade;
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    ClientGetDTO user = new ClientGetDTO();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        await refreshUserDataAsync();
+    }
+
+    private async Task refreshUserDataAsync()
+    {
+        var person = await _facade.GetWithExtendedInfoAsync(id);
+        user.Connections = person.Connections;
+
+    }
+
+}

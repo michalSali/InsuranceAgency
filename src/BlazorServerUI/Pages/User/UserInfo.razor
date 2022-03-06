@@ -1,0 +1,39 @@
+﻿@page "/userInfo"
+@attribute [Authorize]
+@using BLL.Facades.User
+@using DAL.Models
+@using BLL.DTOs.People.User
+@using BlazorServerUI.Authentication.Utility
+
+
+<MudText Style="padding: 20px 20px" Typo="Typo.h4"><b>User Info</b></MudText>
+<ShowUserInfo User="user" />
+
+@inject IUserManagementFacade _facade;
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    private UserInfoDTO user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        if (user == null)
+        {
+            await RefreshUserDataAsync();
+        }
+
+    }
+
+    private async Task RefreshUserDataAsync()
+    {
+        user = null;
+        user = await _facade.GetAsync(id);
+
+    }
+
+}

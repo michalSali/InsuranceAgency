@@ -1,0 +1,56 @@
+﻿@page "/userInfoUpdate"
+@attribute [Authorize]
+@using BLL.Facades.User
+@using DAL.Models
+@using BLL.DTOs.People.User
+@using BLL.DTOs.Enums
+@using BlazorServerUI.Authentication.Utility
+
+
+<MudGrid Style="padding: 20px 20px" Spacing="4">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4"><b>Update User Info</b></MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="User.Name" Label="Name" Text="User.Name" Variant="Variant.Text"></MudTextField>
+    </MudItem>
+    <MudItem xs="12">
+        <MudButton  Variant="Variant.Filled" Color="Color.Secondary" OnClick="UpdatePersonAsync">Update user</MudButton>
+    </MudItem>
+</MudGrid>
+
+@inject IUserManagementFacade _facade
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    public UserInfoDTO User { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        if (User == null)
+        {
+            await RefreshUserDataAsync();
+        }
+    }
+
+    private async Task RefreshUserDataAsync()
+    {
+        User = null;
+        User = await _facade.GetAsync(id);
+    }
+
+    public async Task UpdatePersonAsync()
+    {
+        if (User.Name != null)
+        {
+            var person = new UserUpdateDTO() { Name = User.Name, Birth = User.Birth, Gender = User.Gender, Password = "", PasswordConfirm = "" };
+            person.Id = User.Id;
+            await _facade.UpdateAsync(person);
+        }        
+    }
+}

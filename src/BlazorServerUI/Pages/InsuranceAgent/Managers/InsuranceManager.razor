@@ -1,0 +1,97 @@
+﻿@using BLL.DTOs.Objects.Insurance
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Insurance
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h5">Insurances Manager</MudText>
+
+<MudTable MultiSelection="false" Items="@Insurances" @bind-SelectedItem="selectedItem" Hover="true" SortLabel="Sort By" CommitEditTooltip="Commit Edit" OnCommitEditClick="@updateInsurance">
+    <HeaderContent>
+        <MudTh>Insurance ID</MudTh>
+        <MudTh>Creation date</MudTh>
+        <MudTh>Expiration date</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Approved</MudTh>
+        <MudTh>Declined</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="ID">@context.Id</MudTd>
+        <MudTd DataLabel="Creation date">@context.CreationDate</MudTd>
+        <MudTd DataLabel="Expiration date">@context.ExpirationDate</MudTd>
+        <MudTd DataLabel="Description">@(string.IsNullOrEmpty(context.InsuranceOffer?.Description) ? "Insurance #" + context.InsuranceOffer.Id : context.InsuranceOffer.Description) </MudTd>
+        <MudTd DataLabel="Approved">@context.Approved</MudTd>
+        <MudTd DataLabel="Declined">@context.Declined</MudTd>
+    </RowTemplate>
+
+    <RowEditingTemplate>
+        <MudTd> @context.Id </MudTd>
+        <MudTd> @context.CreationDate </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.ExpirationDate" />
+        </MudTd>
+        <MudTd> @context.InsuranceOffer.Description </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Approved" />
+        </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Declined" />
+        </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+<MudGrid>
+    <MudItem xs="12">
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5" Inline="true">Selected ID: @selectedItem?.Id</MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="deleteInsurance">Delete Selected Insurances</MudButton>
+    </MudItem>
+</MudGrid>
+
+@inject IInsuranceFacade _insuranceFacade
+@inject ISnackbar Snackbar
+
+@code {
+    [Parameter]
+    public ClientGetDTO Client { get; set; }
+
+    public List<InsuranceGetDTO> Insurances { get; set; }
+
+    private HashSet<InsuranceGetDTO> selectedInsurances = new HashSet<InsuranceGetDTO>();
+    private InsuranceGetDTO selectedItem = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Insurances = (await _insuranceFacade.GetAllInsurancesWithIncludesAsync(Client.Id)).ToList();
+    }
+
+
+    private async Task deleteInsurance()
+    {
+        var selectedItemId = selectedItem.Id;
+        await _insuranceFacade.DeleteInsuranceAsync(selectedItem.Id);
+        Insurances = Insurances.Where(item => item.Id != selectedItemId).ToList();
+        selectedItem = null;
+        Snackbar.Add("Connection with ID " + selectedItemId + " deleted");
+    }
+
+    private async Task updateInsurance()
+    {
+        var updateDto = new InsuranceUpdateDTO()
+        {
+            ClientId = selectedItem.Client.Id,
+            CreationDate = selectedItem.CreationDate,
+            ExpirationDate = selectedItem.ExpirationDate,
+            Id = selectedItem.Id,
+            InsuranceOfferId = selectedItem.InsuranceOffer.Id,
+            Approved = selectedItem.Approved,
+            Declined = selectedItem.Declined
+        };
+
+        await _insuranceFacade.UpdateInsuranceAsync(updateDto);
+
+        Snackbar.Add("Insurance with ID " + selectedItem.Id + " updated");
+    }
+}

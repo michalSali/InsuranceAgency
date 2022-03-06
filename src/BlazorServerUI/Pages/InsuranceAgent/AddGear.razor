@@ -1,0 +1,71 @@
+﻿@page "/addGear"
+@attribute [Authorize(Roles="InsuranceAgent")]
+@using BLL.DTOs.Enums
+@using BLL.DTOs.Objects.Gear
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+
+
+<MudGrid Style="padding: 20px 20px" Spacing="4">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4">Add Gear</MudText>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudTextField @bind-Value="nameValue" Label="Gear Name" />
+
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudSelect T="GearType" Label="Gear Type" @bind-Value="selectedGearType">
+            @foreach (GearType item in Enum.GetValues(typeof(GearType)))
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="value" Label="Gear Value" />
+
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="addGear">Add Gear</MudButton>
+
+    </MudItem>
+
+</MudGrid>
+
+    @inject IClientFacade _facade
+    @inject IClientFacade _clientFacade;
+
+    @code {
+        public GearType selectedGearType { get; set; }
+        public string nameValue { get; set; }
+        public int value { get; set; }
+        public string selectedName { get; set; }
+
+
+        public IEnumerable<ClientGetDTO> Users { get; set; }
+
+
+        protected override async Task OnInitializedAsync()
+        {
+            Users = await _clientFacade.GetAllClientsAsync();
+        }
+
+        private async Task addGear()
+        {
+            var client = Users.Where(x => x.UserInfo.Name == selectedName).First();
+            var gear = new GearCreateDTO()
+            {
+                ClientId = client.Id,
+                Name = nameValue,
+                Type = selectedGearType,
+                Value = value
+            };
+            await _facade.AddGearAsync(gear);
+
+        }
+
+    }

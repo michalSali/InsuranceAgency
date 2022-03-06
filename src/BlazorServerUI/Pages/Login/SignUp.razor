@@ -1,0 +1,100 @@
+﻿@page "/signup"
+@attribute [Authorize(Roles="LoggedOut")]
+
+@using BlazorServerUI.Authentication
+@using BLL.DTOs.Enums
+@using BLL.DTOs.People.User
+@using BLL.Facades.User
+
+<div style="max-width: 400px;">
+    <MudLink Href="/login" Underline="Underline.Always">Already an user?</MudLink>
+    <EditForm Model="@user" OnValidSubmit="RegisterUser">
+        <DataAnnotationsValidator />
+        <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Full name" HelperText="Max. 32 characters"
+                              @bind-Value="user.Name" For="@(() => user.Name)" />
+                <MudSelect T="Gender" @bind-Value="user.Gender" Label="Gender">
+                    @foreach (Gender item in Enum.GetValues(typeof(Gender)))
+                    {
+                        <MudSelectItem Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudDatePicker @bind-Value="BirthDate" Label="Birth Date" />
+                <MudTextField Label="Password" HelperText="Choose a strong password" Class="mt-3"
+                              @bind-Value="user.Password" For="@(() => user.Password)" InputType="MudBlazor.InputType.Password" />
+                <MudTextField Label="Password" HelperText="Repeat the password" Class="mt-3"
+                              @bind-Value="user.PasswordConfirm" For="@(() => user.PasswordConfirm)" InputType="MudBlazor.InputType.Password" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+            </MudCardActions>
+        </MudCard>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="my-4">
+            Fill out the form correctly to see the success message.
+        </MudText>
+
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Show Validation Summary">
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary />
+                        Error
+                    </MudText>
+                }
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </EditForm>
+</div>
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
+@inject IUserManagementFacade UserFacade
+@code {
+
+    private UserRegisterDTO user;
+    private string BirthDate { get; set; }
+    bool success;
+
+    protected override Task OnInitializedAsync()
+    {
+        user = new UserRegisterDTO();
+        return base.OnInitializedAsync();
+    }
+
+
+    private async Task RegisterUser()
+    {
+        if (BirthDate == null)
+        {
+            success = false;
+            return;
+        }
+
+        success = true;
+
+        user.Birth = Convert.ToDateTime(BirthDate);
+        var returnedUser = await UserFacade.RegisterAsync(user);
+
+        if (returnedUser == null)
+        {
+            Console.WriteLine("NULL");
+            success = false;
+            return;
+        }
+        success = true;
+        Console.WriteLine("SUCCESS");
+        await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedUser);
+        Console.WriteLine("MARKED AS AUTHENTICATED");
+        NavigationManager.NavigateTo("/");
+        
+    }
+
+}
+

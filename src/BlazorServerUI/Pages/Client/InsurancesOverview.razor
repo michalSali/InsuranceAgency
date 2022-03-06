@@ -1,0 +1,187 @@
+﻿@page "/insurancesOverview"
+@attribute [Authorize(Roles = "Client")]
+@using BLL.DTOs.Objects.Insurance
+@using BLL.Facades.Insurance
+@using BlazorServerUI.Authentication.Utility
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h4">Insurances Overview</MudText>
+
+<MudGrid>
+    <MudItem md="8" Class="mud-text-align-center my-auto">
+
+        @if (ShowActiveApproved)
+        {
+            <MudText Typo="Typo.subtitle2" Align="Align.Center">Active & Approved Insurances</MudText>
+            <MudSimpleTable>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Creation Date</th>
+                        <th>Expiration Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ActiveApprovedInsurances == null || ActiveApprovedInsurances.ToList().Count == 0)
+                    {
+                        <tr>There are no such insurances.</tr>
+                    }
+                    else
+                    {
+                        @foreach (var insurance in ActiveApprovedInsurances)
+                        {
+                            <tr>
+                                <td>@((insurance.InsuranceOffer == null) ? "Insurance #" + insurance.Id : insurance.InsuranceOffer.Description)</td>
+                                <td>@(insurance.CreationDate)</td>
+                                <td>@(insurance.ExpirationDate)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @if (ShowWaitingForApproval)
+        {
+            <MudText Typo="Typo.subtitle2" Align="Align.Center">Insurances Waiting For Approval</MudText>
+            <MudSimpleTable>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Creation Date</th>
+                        <th>Expiration Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (InsurancesWaitingForApproval == null || InsurancesWaitingForApproval.ToList().Count == 0)
+                    {
+                        <tr>There are no such insurances.</tr>
+                    }
+                    else
+                    {
+                        @foreach (var insurance in InsurancesWaitingForApproval)
+                        {
+                            <tr>
+                                <td>@((insurance.InsuranceOffer == null) ? "Insurance #" + insurance.Id : insurance.InsuranceOffer.Description)</td>
+                                <td>@(insurance.CreationDate)</td>
+                                <td>@(insurance.ExpirationDate)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @if (ShowDeclined)
+        {
+            <MudText Typo="Typo.subtitle2" Align="Align.Center">Declined Insurances</MudText>
+            <MudSimpleTable>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Creation Date</th>
+                        <th>Expiration Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (DeclinedInsurances == null || DeclinedInsurances.ToList().Count == 0)
+                    {
+                        <tr>There are no such insurances.</tr>
+                    }
+                    else
+                    {
+                        @foreach (var insurance in DeclinedInsurances)
+                        {
+                            <tr>
+                                <td>@((insurance.InsuranceOffer == null) ? "Insurance #" + insurance.Id : insurance.InsuranceOffer.Description)</td>
+                                <td>@(insurance.CreationDate)</td>
+                                <td>@(insurance.ExpirationDate)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+        @if (ShowExpired)
+        {
+            <MudText Typo="Typo.subtitle2" Align="Align.Center">Expired Insurances</MudText>
+            <MudSimpleTable>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Creation Date</th>
+                        <th>Expiration Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ExpiredInsurances == null || ExpiredInsurances.ToList().Count == 0)
+                    {
+                        <tr>There are no such insurances.</tr>
+                    }
+                    else
+                    {
+                        @foreach (var insurance in ExpiredInsurances)
+                        {
+                            <tr>
+                                <td>@((insurance.InsuranceOffer == null) ? "Insurance #" + insurance.Id : insurance.InsuranceOffer.Description)</td>
+                                <td>@(insurance.CreationDate)</td>
+                                <td>@(insurance.ExpirationDate)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+
+
+
+
+
+    </MudItem>
+    <MudItem md="4">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.subtitle2" GutterBottom="true">Display Options</MudText>
+                <MudCheckBox @bind-Checked="@ShowActiveApproved" Label="Active & Approved" Color="Color.Primary" Style="width:100%;" />
+                <MudCheckBox @bind-Checked="@ShowWaitingForApproval" Label="Waiting For Approval" Color="Color.Primary" Style="width:100%;" />
+                <MudCheckBox @bind-Checked="@ShowDeclined" Label="Declined" Color="Color.Primary" Style="width:100%;" />
+                <MudCheckBox @bind-Checked="@ShowExpired" Label="Expired" Color="Color.Primary" Style="width:100%;" />
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@inject IInsuranceFacade _insuranceFacade
+@inject NavigationManager _navManager
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private int id;
+
+    public List<InsuranceGetDTO> ActiveApprovedInsurances { get; set; }
+    public List<InsuranceGetDTO> ExpiredInsurances { get; set; }
+    public List<InsuranceGetDTO> DeclinedInsurances { get; set; }
+    public List<InsuranceGetDTO> InsurancesWaitingForApproval { get; set; }
+
+    public bool ShowActiveApproved { get; set; }
+    public bool ShowExpired { get; set; }
+    public bool ShowDeclined { get; set; }
+    public bool ShowWaitingForApproval { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await authenticationStateTask).User);
+
+        var insurances = await _insuranceFacade.GetAllInsurancesAsync(id, false);
+               
+        ActiveApprovedInsurances = insurances.Where(x => x.Approved && x.ExpirationDate > DateTime.Now).ToList();
+        ExpiredInsurances = insurances.Where(x => x.ExpirationDate <= DateTime.Now && x.Declined == false).ToList();
+        DeclinedInsurances = insurances.Where(x => x.Declined).ToList();
+        InsurancesWaitingForApproval = insurances.Where(x => x.Approved = false && x.Declined == false && x.ExpirationDate > DateTime.Now).ToList();
+    }
+
+}

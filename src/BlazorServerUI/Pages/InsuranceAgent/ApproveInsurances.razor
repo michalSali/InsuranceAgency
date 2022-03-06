@@ -1,0 +1,91 @@
+﻿@page "/approveInsurances"
+@attribute [Authorize(Roles = "InsuranceAgent")]
+@using BLL.DTOs.People.InsuranceAgent
+@using BLL.DTOs.Objects.Insurance
+@using BLL.Facades.Insurance
+@using BLL.Facades.InsuranceAgent
+@using BLL.Facades.Client
+@using BlazorServerUI.Authentication.Utility
+@using AutoMapper
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h4">Insurances Overview</MudText>
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h6">Select insurance to approve / decline.</MudText>
+
+<MudTable Items="Insurances" MultiSelection="false" @bind-SelectedItem="SelectedInsurance" Hover="true" SortLabel="Sort By">
+    <HeaderContent> 
+        <MudTh>Description</MudTh>
+        <MudTh>Created</MudTh>
+        <MudTh>Expires</MudTh>
+    </HeaderContent>
+
+    <RowTemplate>       
+        <MudTd DataLabel="Description">@(string.IsNullOrEmpty(context.InsuranceOffer?.Description) ? "Insurance Offer #" + context.Id : context.InsuranceOffer.Description)</MudTd>
+        <MudTd DataLabel="Created">@context.CreationDate</MudTd>
+        <MudTd DataLabel="Expires">@context.ExpirationDate</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@if (SelectedInsurance != null)
+{
+    <MudText Style="padding: 20px">Selected Insurance: @(string.IsNullOrEmpty(SelectedInsurance.InsuranceOffer?.Description)
+                ? "Insurance Offer #" + SelectedInsurance.Id : SelectedInsurance.InsuranceOffer.Description)</MudText>
+
+    <MudButton Color="Color.Primary" OnClick="approve" Variant="Variant.Filled">Approve Insurance</MudButton>
+    <MudButton Color="Color.Primary" OnClick="decline" Variant="Variant.Filled">Decline Insurance</MudButton>
+}
+
+@inject IInsuranceFacade _insuranceFacade
+@inject IInsuranceAgentFacade _insuranceAgentFacade
+@inject IClientFacade _clientFacade
+@inject IMapper _mapper
+@inject NavigationManager _navManager
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private int id;
+
+    public IEnumerable<InsuranceGetDTO> Insurances { get; set; }
+    public InsuranceGetDTO SelectedInsurance { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        id = CustomClaimsUtility.ExtractClaimsId((await authenticationStateTask).User);
+
+        var clients = await _clientFacade.GetAllClientsAsync(false, id);
+
+        Insurances = new List<InsuranceGetDTO>();
+        if (clients == null)
+        {
+            return;
+        }
+
+        foreach (var client in clients)
+        {
+            var insurances = await _insuranceFacade.GetAllInsurancesWithIncludesAsync(client.Id, true);           
+            Insurances = Insurances.Union(insurances.Where(x => x.Approved == false && x.Declined == false));
+        }        
+    }
+
+    private async Task decline()
+    {
+        SelectedInsurance.Declined = true;
+        var selectedInsuranceId = SelectedInsurance.Id;
+        var _ = await _insuranceFacade.UpdateInsuranceAsync(_mapper.Map<InsuranceUpdateDTO>(SelectedInsurance));
+        Insurances = Insurances.Where(x => x.Id != selectedInsuranceId);
+        SelectedInsurance = null;
+    }
+
+    private async Task approve()
+    {
+        SelectedInsurance.Approved = true;
+        var selectedInsuranceId = SelectedInsurance.Id;
+        var _ = await _insuranceFacade.UpdateInsuranceAsync(_mapper.Map<InsuranceUpdateDTO>(SelectedInsurance));
+        Insurances = Insurances.Where(x => x.Id != selectedInsuranceId);
+        SelectedInsurance = null;
+    }
+
+}

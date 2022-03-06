@@ -1,0 +1,99 @@
+﻿@page  "/login"
+@attribute [Authorize(Roles="LoggedOut")]
+
+@using System.Security.Claims
+@using BlazorServerUI.Authentication
+@using BlazorServerUI.Authentication.Utility
+@using BLL.DTOs.People.User
+@using BLL.Facades.User
+
+<div style="max-width: 400px;">
+    <MudLink Href="/signup" Underline="Underline.Always">Don't have an account yet?</MudLink>
+    <EditForm Model="@user" OnValidSubmit="ValidateUser">
+        <DataAnnotationsValidator/>
+        <MudCard>
+            <MudCardContent>
+                <MudTextField Label="Full name"
+                              @bind-Value="user.Name" For="@(() => user.Name)"/>
+                <MudTextField Label="Password" Class="mt-3"
+                              @bind-Value="user.Password" For="@(() => user.Password)" InputType="MudBlazor.InputType.Password"/>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Login</MudButton>
+            </MudCardActions>
+        </MudCard>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="my-4">
+            Fill out the form correctly to see the success message.
+        </MudText>
+
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Show Validation Summary">
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary/>
+                        Error
+                    </MudText>
+                }
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </EditForm>
+</div>
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject Blazored.SessionStorage.ISessionStorageService SessionStorageService
+@inject IUserManagementFacade UserFacade
+@inject IJSRuntime JsRunTime
+@code {
+
+    private UserLoginDTO user;
+    bool success;
+    ClaimsPrincipal claimsPrincipal;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        user = new UserLoginDTO();
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            claimsPrincipal = (await AuthenticationStateTask).User;
+
+            if (claimsPrincipal.Identity.IsAuthenticated)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            StateHasChanged();
+        }
+        
+    }
+
+    private async Task ValidateUser()
+    {
+        //assume that user is valid
+        //call an AP
+        
+        var returnedUser = await UserFacade.LoginAsync(user);
+
+        if (returnedUser == null)
+        {
+            success = false;
+            return;
+        }
+        await ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(returnedUser);
+        NavigationManager.NavigateTo("/");
+        success = true;
+    }
+
+}

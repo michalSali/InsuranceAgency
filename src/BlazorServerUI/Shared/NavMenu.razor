@@ -1,0 +1,58 @@
+﻿<MudNavMenu Class="demo-navmenu">
+    <MudNavLink Href="/" Icon="@Icons.Material.Dashboard">Dashboard</MudNavLink>
+
+    <AuthorizeView>
+        <MudNavGroup Title="User" Icon="@Icons.Material.People" Expanded="false">
+            <MudNavLink Href="/userInfo" Icon="@Icons.Material.Person">User Info</MudNavLink>
+            <MudNavLink Href="/userInfoUpdate" Icon="@Icons.Material.Person">Update User Info</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+    
+    <AuthorizeView Roles="Client">
+        <MudNavGroup Title="Client" Icon="@Icons.Material.AccountBox" Expanded="false">
+            <MudNavLink Href="/clientInfo" Icon="@Icons.Material.People">Client Info</MudNavLink>            
+            <MudNavLink Href="/showInsuranceOffers" Icon="@Icons.Material.People">View Insurance Offers</MudNavLink>
+            <MudNavLink Href="/insurancesOverview" Icon="@Icons.Material.People">Insurances Overview</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+
+    <AuthorizeView Roles="InsuranceAgent">
+        <MudNavGroup Title="Insurance Agent" Icon="@Icons.Material.AccountBox" Expanded="false">
+            <MudNavLink Href="/getAllClients" Icon="@Icons.Material.People">All clients</MudNavLink>
+            <MudNavLink Href="/manager" Icon="@Icons.Material.People">Client Manager</MudNavLink>
+            <MudNavLink Href="/addClientUser" Icon="@Icons.Material.People">Add Client</MudNavLink>
+            <MudNavLink Href="/addGear" Icon="@Icons.Material.People">Add Gear</MudNavLink>
+            <MudNavLink Href="/addBGInfo" Icon="@Icons.Material.People">Add Background Info</MudNavLink>
+            <MudNavLink Href="/createInsurance" Icon="@Icons.Material.People">Create Insurance</MudNavLink>
+            <MudNavLink Href="/approveInsurances" Icon="@Icons.Material.People">Approve & Decline Insurances</MudNavLink>
+            <MudNavLink Href="/showClientConflicts" Icon="@Icons.Material.People">Show Client Conflicts</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+            
+    <AuthorizeView Roles="Administrator">
+        <MudNavGroup Title="Administrator" Icon="@Icons.Material.AccountBox" Expanded="false">
+            <MudNavLink Href="/addUser" Icon="@Icons.Material.PersonAdd">Add user</MudNavLink>
+            <MudNavLink Href="/getAllUsers" Icon="@Icons.Material.People">Users</MudNavLink>
+            <MudNavLink Href="/getAllDirectors" Icon="@Icons.Material.People">Directors</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+            
+    <AuthorizeView Roles="Director">
+        <MudNavGroup Title="Director" Icon="@Icons.Material.AccountBox" Expanded="false">
+            <MudNavLink Href="/getAllAgents" Icon="@Icons.Material.People">All Insurance Agents</MudNavLink>
+            <MudNavLink Href="/createOffer" Icon="@Icons.Material.People">Create Insurance Offer</MudNavLink>
+            <MudNavLink Href="/createConflict" Icon="@Icons.Material.People">Create Conflict</MudNavLink>
+            <MudNavLink Href="/insuranceOffersManager" Icon="@Icons.Material.People">Manage Insurance Offers</MudNavLink>
+            <MudNavLink Href="/showAggregatedClientInfo" Icon="@Icons.Material.People">Show Aggregated Client Info</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+
+    <AuthorizeView>
+        <MudNavGroup Title="Settings" Icon="@Icons.Material.Settings" Expanded="false">
+            <MudNavLink Href="/security" Icon="@Icons.Material.Security">Security</MudNavLink>
+        </MudNavGroup>
+    </AuthorizeView>
+    
+    <MudNavLink Href="/about">About</MudNavLink>
+
+</MudNavMenu>

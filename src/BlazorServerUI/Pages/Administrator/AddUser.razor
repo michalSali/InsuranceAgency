@@ -1,0 +1,93 @@
+﻿@page "/addUser"
+@attribute [Authorize(Roles = "Administrator")]
+
+@using BLL.DTOs.People.User
+@using BLL.DTOs.Enums
+@using BLL.DTOs.People.Administrator
+@using BLL.DTOs.People.Director
+@using BLL.DTOs.People.InsuranceAgent
+@namespace BlazorServerUI.Pages
+
+@inject BLL.Facades.User.IUserManagementFacade _facade
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h4">Add New User</MudText>
+
+<MudGrid Spacing="4" Style="padding: 0px 20px">
+
+    <MudItem xs="6">
+        <MudTextField @bind-Value="Name" Label="Name" Variant="Variant.Text"></MudTextField>
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudDatePicker @bind-Value="BirthDateTime" Label="Birth date" />
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudSelect T="Gender" @bind-Value="UserGender" Label="Gender">
+            @foreach (Gender item in Enum.GetValues(typeof(Gender)))
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudTextField @bind-Value="Password" Label="Password" InputType="MudBlazor.InputType.Password" Variant="Variant.Text" />
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6">
+        <MudText>Role</MudText>
+        <MudGrid Style="padding: 8px">
+            <MudCheckBox @bind-Checked="@Label_isAdministrator" Label="Administrator" Color="Color.Primary"></MudCheckBox>
+            <MudCheckBox @bind-Checked="@Label_isDirector" Label="Director" Color="Color.Primary"></MudCheckBox>
+            <MudCheckBox @bind-Checked="@Label_isAgent" Label="Insurance Agent" Color="Color.Primary"></MudCheckBox>
+        </MudGrid>
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+    <MudItem xs="6"><MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="AddPersonAsync">Add user</MudButton></MudItem>
+
+
+</MudGrid>
+
+@code {
+
+
+    private string Name { get; set; }
+    private string BirthDateTime { get; set; }
+    private Gender UserGender { get; set; }
+    private string Password { get; set; }
+    private bool Label_isAdministrator { get; set; }
+    private bool Label_isDirector { get; set; }
+    private bool Label_isAgent { get; set; }
+
+    UserInfoDTO createdUser;
+
+    public async Task AddPersonAsync()
+    {
+        if (Name != null && BirthDateTime != null)
+        {
+            var person = new UserRegisterDTO() { Name = Name, Birth = Convert.ToDateTime(BirthDateTime), Gender = UserGender, Password = Password };
+            createdUser = await _facade.RegisterAsync(person);
+        }
+
+        if (Label_isAdministrator)
+        {
+            var adminDto = new AdministratorCreateDTO();
+            adminDto.UserId = createdUser.Id;
+            await _facade.AddRoleAsync(adminDto);
+        }
+        if (Label_isAgent)
+        {
+            var agentDto = new InsuranceAgentCreateDTO();
+            agentDto.UserId = createdUser.Id;
+            await _facade.AddRoleAsync(agentDto);
+        }
+        if (Label_isDirector)
+        {
+            var directorDto = new DirectorCreateDTO();
+            directorDto.UserId = createdUser.Id;
+            await _facade.AddRoleAsync(directorDto);
+        }
+    }
+
+}

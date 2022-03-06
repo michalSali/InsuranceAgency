@@ -1,0 +1,37 @@
+@page "/getAllDirectors"
+@attribute [Authorize(Roles="Administrator")]
+
+@using BLL.Facades.Director
+@using BLL.DTOs.People.Director
+<h5> All Directors </h5>
+
+@if (directors == null)
+{
+    <p> Loading.. </p>
+}
+else
+{
+    <ShowDirectors Directors="@directors"/>
+}
+
+
+@inject IDirectorFacade _facade;
+
+@code {
+
+    private List<DirectorGetDTO> directors;
+    private async Task refreshUserDataAsync()
+    {
+        directors = null;
+        directors = (await _facade.GetAllAsync()).ToList();
+
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (directors == null)
+        {
+            await refreshUserDataAsync();
+        }
+    }
+}

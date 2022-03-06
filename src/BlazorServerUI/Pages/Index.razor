@@ -1,0 +1,17 @@
+﻿@page "/"
+@using BlazorServerUI.Authentication.Utility
+
+<center>
+
+    <MudText Style="padding: 40px" Typo="Typo.h3">Welcome!</MudText>
+    <AuthorizeView>
+        <Authorized>
+            <p>
+                Use the left navigation panel in order to perform actions.
+            </p>
+        </Authorized>
+        <NotAuthorized>
+            <p>Please login in order to continue.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</center>

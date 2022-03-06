@@ -1,0 +1,62 @@
+﻿@page "/manager/{Id:int}"
+@attribute [Authorize(Roles="InsuranceAgent")]
+@using BLL.DTOs.People.InsuranceAgent
+@using BLL.DTOs.People.User
+@using BLL.Facades.Client
+@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.Insurance
+@using Microsoft.AspNetCore.Http.Extensions
+
+<MudGrid Spacing="4" Style="padding: 20px 20px">
+    <MudItem xs="12">
+        <MudField Label="Client" Variant="Variant.Text">@SelectedName</MudField>
+    </MudItem>
+    <MudItem xs="12">
+        <MudTabs Elevation="1" Color="@Color.Info">
+            <MudTabPanel Text="Insurances">
+                <InsuranceManager Client="@ClientDto"></InsuranceManager>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Gear">
+                <GearManager Client="ClientDto"></GearManager>
+            </MudTabPanel>
+            <MudTabPanel Text="Conflicts">
+                <ConflictManager Client="ClientDto"></ConflictManager>
+            </MudTabPanel>
+            <MudTabPanel Text="Client Connections">
+                <ConnectionsManager Client="ClientDto"></ConnectionsManager>
+            </MudTabPanel>
+            <MudTabPanel Text="Background Information">
+                <BGInfoManager Client="ClientDto"></BGInfoManager>
+            </MudTabPanel>
+        </MudTabs>
+    </MudItem>
+</MudGrid>
+
+@inject IClientFacade _facade;
+@inject NavigationManager NavManager
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    public ClientGetDTO ClientDto { get; set; }
+
+
+    public string SelectedName { get; set; }
+
+
+    public IEnumerable<ClientGetDTO> Users { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ClientDto = await _facade.GetWithExtendedInfoAsync(Id);
+        if (ClientDto.Insurances == null)
+        {
+            ClientDto.Insurances = new List<InsuranceGetDTO>();
+        }
+
+        SelectedName = ClientDto.UserInfo.Name;
+    }
+}

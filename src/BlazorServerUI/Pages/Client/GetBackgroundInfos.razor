@@ -1,0 +1,43 @@
+﻿@attribute [Authorize(Roles="Client")]
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+@using BlazorServerUI.Authentication.Utility
+
+
+<MudTable Style="padding: 0px 20px" Items="@user.BackgroundInfos" Hover="true" Dense="true" FixedHeader="true" >
+    <HeaderContent>
+        <MudTh>Description</MudTh>
+        <MudTh>Date</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Description">@context.Text</MudTd>
+        <MudTd DataLabel="Date">@context.Date</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@inject IClientFacade _facade;
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    ClientGetDTO user = new ClientGetDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        await refreshUserDataAsync();
+    }
+
+    private async Task refreshUserDataAsync()
+    {
+        var person = await _facade.GetAggregatedAsync(id);
+
+        user.BackgroundInfos = person.BackgroundInfos;
+
+    }
+
+}

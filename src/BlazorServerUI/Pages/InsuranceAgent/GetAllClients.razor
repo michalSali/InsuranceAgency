@@ -1,0 +1,49 @@
+﻿@page "/getAllClients"
+@attribute [Authorize(Roles = "InsuranceAgent")]
+
+@using BLL.Facades.Client
+@using BLL.DTOs.People.Client
+@using BlazorServerUI.Authentication.Utility
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h4">All Clients</MudText>
+<MudTable Style="padding: 0px 20px" Items="users" Hover="true" Dense="true" FixedHeader="@fixedheader">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Gender</MudTh>
+        <MudTh>Birth</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.UserInfo.Name</MudTd>
+        <MudTd DataLabel="Gender">@context.UserInfo.Gender</MudTd>
+        <MudTd DataLabel="Birth">@context.UserInfo.Birth</MudTd>
+
+    </RowTemplate>
+</MudTable>
+
+@inject IClientFacade _clientFacade
+
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    private List<ClientGetDTO> users;
+    private async Task refreshUserDataAsync()
+    {       
+        users = (await _clientFacade.GetAllClientsAsync(true, id)).ToList();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        if (users == null)
+        {
+            await refreshUserDataAsync();
+        }
+    }
+
+    bool fixedheader = true;
+}

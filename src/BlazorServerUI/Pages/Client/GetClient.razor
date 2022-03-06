@@ -1,0 +1,56 @@
+﻿@page "/clientInfo"
+@attribute [Authorize(Roles="Client")]
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+@using BlazorServerUI.Authentication.Utility
+
+<MudText Style="padding: 20px 20px" Typo="Typo.h4">Client Info</MudText>
+<MudTabs Elevation="1" Color="@Color.Info">
+    <MudTabPanel Text="Basic Info">
+        <ShowClientInfo User="user" />
+    </MudTabPanel>
+
+    <MudTabPanel Text="Gear">
+       <GetGear></GetGear>
+    </MudTabPanel>
+    <MudTabPanel Text="Conflicts">
+        <GetConflicts></GetConflicts>
+    </MudTabPanel>
+    <MudTabPanel Text="Client Connections">
+        <GetConnections></GetConnections>
+    </MudTabPanel>
+    <MudTabPanel Text="Background Information">
+        <GetBackgroundInfos></GetBackgroundInfos>
+    </MudTabPanel>
+    <MudTabPanel Text="Insurances">
+        <GetInsurance></GetInsurance>
+    </MudTabPanel>
+</MudTabs>
+
+
+@inject IClientFacade _facade;
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    private ClientGetDTO user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        if (user == null)
+        {
+            await refreshUserDataAsync();
+        }
+    }
+
+    private async Task refreshUserDataAsync()
+    {
+        user = null;
+        user = await _facade.GetAsync(id);
+    }
+
+}

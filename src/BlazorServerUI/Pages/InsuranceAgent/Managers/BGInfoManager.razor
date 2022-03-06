@@ -1,0 +1,86 @@
+﻿@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.Gear
+@using BLL.DTOs.Objects.BackgroundInfo
+@using BLL.Facades.Client
+
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h5">Background Info Manager</MudText>
+<MudTable MultiSelection="false" Items="@BackgroundInfosCollection" @bind-SelectedItem="@selectedItem" Hover="true" SortLabel="Sort By" CommitEditTooltip="Commit Edit" OnCommitEditClick="@updateBGInfo">
+    <HeaderContent>
+        <MudTh>ID</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Date</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="ID">@context.Id</MudTd>
+        <MudTd DataLabel="Description">@context.Text</MudTd>
+        <MudTd DataLabel="Date">@context.Date</MudTd>
+    </RowTemplate>
+
+    <RowEditingTemplate>
+        <MudTd> @context.Id </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Text" />
+        </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Date" />
+        </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+<MudGrid>
+    <MudItem xs="12">
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5" Inline="true">Selected: @selectedItem?.Id</MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="deleteBGInfo">Delete Selected Infos</MudButton>
+    </MudItem>
+</MudGrid>
+
+@inject ISnackbar Snackbar
+@inject IClientFacade _clientFacade
+
+@code {
+    [Parameter]
+    public ClientGetDTO Client { get; set; }
+
+    public IEnumerable<BackgroundInfoGetDTO> BackgroundInfosCollection { get; set; }
+
+    private HashSet<BackgroundInfoGetDTO> selectedBGInfos = new HashSet<BackgroundInfoGetDTO>();
+
+    private BackgroundInfoGetDTO selectedItem = null;
+
+
+    protected override void OnInitialized()
+    {
+        BackgroundInfosCollection = Client.BackgroundInfos;
+    }
+
+    private async Task deleteBGInfo()
+    {
+        var selectedItemId = selectedItem.Id;
+        await _clientFacade.DeleteBackgroundInfoAsync(selectedItem.Id);
+        BackgroundInfosCollection = BackgroundInfosCollection.Where(item => item.Id != selectedItemId).ToList();
+        selectedItem = null;
+        Snackbar.Add("Conflict Record" + selectedItemId + " deleted");
+
+    }
+
+    private async Task updateBGInfo()
+    {
+        var BGInfo = await _clientFacade.GetBackgroundInfoAsync(selectedItem.Id);
+        BackgroundInfoUpdateDTO updateDTO = new BackgroundInfoUpdateDTO()
+        {
+            Id = selectedItem.Id,
+            ClientId = BGInfo.Client.Id,
+            Date = selectedItem.Date,
+            Text = selectedItem.Text
+        };
+        await _clientFacade.UpdateBackgroundInfoAsync(updateDTO);
+        Snackbar.Add("Background Info with ID " + selectedItem.Id + " updated");
+
+    }
+}

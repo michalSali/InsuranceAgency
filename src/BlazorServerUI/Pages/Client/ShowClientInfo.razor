@@ -1,0 +1,49 @@
+﻿@using BLL.DTOs.People.User
+@using BLL.DTOs.People.Client
+@namespace BlazorServerUI.Pages
+
+@if (User == null)
+{
+    <MudGrid Style="padding: 0px 20px;">
+        <MudText Typo="Typo.h5">User not found</MudText>
+    </MudGrid>
+}
+else
+{
+    <MudGrid Style="padding: 0px 20px;">
+        <MudItem xs="12">
+            <MudText></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5"><b>Name:</b></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5">@User.UserInfo.Name</MudText>
+        </MudItem>
+        <MudItem xs="6">
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5"><b>Birth Date:</b></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5">@User.UserInfo.Birth</MudText>
+        </MudItem>
+        <MudItem xs="6">
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5"><b>Gender:</b></MudText>
+        </MudItem>
+        <MudItem xs="3">
+            <MudText Typo="Typo.h5">@User.UserInfo.Gender</MudText>
+        </MudItem>
+    </MudGrid>
+}
+
+@code
+{
+    [Parameter]
+    public ClientGetDTO User { get; set; }
+
+    [Parameter]
+    public bool UseLinkRef { get; set; } = false;
+}

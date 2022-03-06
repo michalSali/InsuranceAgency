@@ -1,0 +1,95 @@
+﻿@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.ConflictRecord
+@using BLL.Facades.Conflict
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h5">Conflicts Manager</MudText>
+
+<MudTable MultiSelection="false" Items="@ConflictRecordsCollection" @bind-SelectedItem="@selectedItem" Hover="true" SortLabel="Sort By" CommitEditTooltip="Commit Edit" OnCommitEditClick="@updateConflictRecord">
+    <HeaderContent>
+        <MudTh>Date</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Balance Change</MudTh>
+        <MudTh>Conflict</MudTh>
+        <MudTh>Location</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Date">@context.Date</MudTd>
+        <MudTd DataLabel="Description">@(string.IsNullOrEmpty(context.Description) ? "Unknown" : context.Description)</MudTd>
+        <MudTd DataLabel="Balance Change">@context.BalanceChange</MudTd>
+        <MudTd DataLabel="Conflict">@(string.IsNullOrEmpty(context.Conflict.Name) ? "Unknown" : context.Conflict.Name)</MudTd>
+        <MudTd DataLabel="Location">@(string.IsNullOrEmpty(context.Conflict.Location) ? "Unknown" : context.Conflict.Location)</MudTd>
+    </RowTemplate>
+
+    <RowEditingTemplate>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Date" />
+        </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Description" />
+        </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.BalanceChange" />
+        </MudTd>
+        <MudTd> @context.Conflict.Name </MudTd>
+        <MudTd> @context.Conflict.Location </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+<MudGrid>
+    <MudItem xs="12">
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5" Inline="true">Selected: @selectedItem?.Description</MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="deleteConflict">Delete Selected Conflicts</MudButton>
+    </MudItem>
+</MudGrid>
+
+@inject ISnackbar Snackbar
+@inject IConflictFacade _conflictFacade
+@code {
+    [Parameter]
+    public ClientGetDTO Client { get; set; }
+
+    public List<ConflictRecordGetDTO> ConflictRecordsCollection { get; set; }
+
+    private HashSet<ConflictRecordGetDTO> selectedConflicts = new HashSet<ConflictRecordGetDTO>();
+
+    private ConflictRecordGetDTO selectedItem = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ConflictRecordsCollection = (await _conflictFacade.GetAllRecordsWithParticipantIdSorted(Client.Id)).ToList();
+    }
+
+    private async Task deleteConflict()
+    {
+        var selectedItemId = selectedItem.Id;
+        var selectedItemDescription = selectedItem.Description;
+        await _conflictFacade.DeleteConflictRecordAsync(selectedItem.Id);
+        ConflictRecordsCollection = ConflictRecordsCollection.Where(item => item.Id != selectedItemId).ToList();
+        selectedItem = null;
+        Snackbar.Add("Conflict Record" + selectedItemDescription + " deleted");
+    }
+    
+
+    private async Task updateConflictRecord()
+    {
+        var conflictInvolvement = (await _conflictFacade.GetAllInvolvementsByClientAsync(Client.Id))
+            .Where(x => x.ConflictId == selectedItem.Conflict.Id)
+            .FirstOrDefault();
+        var updateDto = new ConflictRecordUpdateDTO()
+        {
+            Date = selectedItem.Date,
+            Description = selectedItem.Description,
+            BalanceChange = selectedItem.BalanceChange,
+            Id = selectedItem.Id,
+            ConflictInvolvementId = conflictInvolvement.Id
+        };
+        await _conflictFacade.UpdateConflictRecordAsync(updateDto);
+        Snackbar.Add("Conflict Record" + selectedItem.Description + " updated");
+
+    }
+}

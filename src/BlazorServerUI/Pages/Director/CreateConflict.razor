@@ -1,0 +1,79 @@
+﻿@page "/createConflict"
+@attribute [Authorize(Roles="Director")]
+
+@using BLL.DTOs.Objects.Conflict
+@using BLL.Facades.Conflict
+@using BlazorServerUI.Authentication.Utility
+
+
+
+<MudGrid Style="padding: 20px 20px" Spacing="4">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4">Create Conflict</MudText>
+
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="ConflictName" Label="Conflict Name" />
+
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField @bind-Value="ConflictLocation" Label="Conflict Location" />
+
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField T="string" @bind-Value="Description" Label="Description" Variant="Variant.Text" Lines="8" Immediate="true" />
+
+    </MudItem>
+    <MudItem xs="3">
+        <MudDatePicker @bind-Value="ConflictStart" Label="Conflict Start" />
+
+    </MudItem>
+    <MudItem xs="3">
+        <MudDatePicker @bind-Value="ConflictEnd" Label="Conflict End" Disabled="Label_isActive" />
+        <MudCheckBox @bind-Checked="@Label_isActive" Label="Conflict is active" Color="Color.Primary"></MudCheckBox>
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddConflict">Create Conflict</MudButton>
+        </MudItem>
+
+
+</MudGrid>
+    @inject IConflictFacade _facade
+    @code {
+
+        [CascadingParameter]
+        public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+        private int id;
+
+        public string ConflictName { get; set; }
+        public string ConflictLocation { get; set; }
+        public string Description { get; set; }
+        public string ConflictStart { get; set; }
+        public string ConflictEnd { get; set; }
+        private bool Label_isActive { get; set; } = false;
+
+        protected override async Task OnInitializedAsync()
+        {
+            id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        }
+
+        private async Task AddConflict()
+        {
+            var conflict = new ConflictCreateDTO()
+            {
+                Location = ConflictLocation,
+                Name = ConflictName,
+                Description = Description,
+                Beginning = Convert.ToDateTime(ConflictStart),
+                DirectorId = id
+            };
+            if (!Label_isActive)
+            {
+                conflict.End = Convert.ToDateTime(ConflictEnd);
+            }
+            await _facade.CreateAsync(conflict);
+
+        }
+    }

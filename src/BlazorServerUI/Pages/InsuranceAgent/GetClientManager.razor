@@ -1,0 +1,63 @@
+﻿@page "/manager"
+@attribute [Authorize(Roles="InsuranceAgent")]
+@using BLL.DTOs.People.InsuranceAgent
+@using BLL.DTOs.People.User
+@using BLL.Facades.Client
+@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.Insurance
+@using Microsoft.AspNetCore.Http.Extensions
+
+<MudGrid Spacing="4" Style="padding: 20px 20px 20px">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5">Select a Client</MudText>
+
+    </MudItem>
+    <MudItem xs="12">
+        <MudSelect T="string" Label="Client" @bind-Value="selectedName">
+            @foreach (var client in Users)
+            {
+                <MudSelectItem Value="@(client.UserInfo.Name)"/>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="refreshUserDataAsync">OK</MudButton>
+
+    </MudItem>
+</MudGrid>
+
+@inject IClientFacade _facade;
+@inject NavigationManager NavManager
+
+@code {
+
+    public ClientGetDTO ClientDto { get; set; }
+
+    public InsuranceGetDTO Insurance { get; set; }
+
+
+    public string selectedName { get; set; }
+
+    public IEnumerable<InsuranceGetDTO> Insurances { get; set; }
+
+    public IEnumerable<ClientGetDTO> Users { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await _facade.GetAllClientsAsync();
+    }
+
+    private async Task refreshUserDataAsync()
+    {
+        var client = Users.Where(x => x.UserInfo.Name == selectedName).First();
+        var person = await _facade.GetWithExtendedInfoAsync(client.Id);
+        if (person.Insurances == null)
+        {
+            person.Insurances = new List<InsuranceGetDTO>();
+        }
+
+        Insurances = person.Insurances;
+        NavManager.NavigateTo("/manager/" + client.Id);
+
+}
+}

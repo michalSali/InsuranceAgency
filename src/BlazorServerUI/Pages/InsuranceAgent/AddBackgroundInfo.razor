@@ -1,0 +1,63 @@
+﻿@page "/addBGInfo"
+@attribute [Authorize(Roles="InsuranceAgent")]
+@using BLL.Facades.Client
+@using BLL.DTOs.Objects.BackgroundInfo
+@using BLL.DTOs.People.Client
+
+<MudGrid Style="padding: 20px 20px" Spacing="4">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4">Add Background Information</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <MudSelect T="string" Label="Client" @bind-Value="selectedName">
+            @foreach (var client in Users)
+            {
+                <MudSelectItem Value="@(client.UserInfo.Name)" />
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12">
+        <MudTextField T="string" @bind-Value="Description" Label="Description" Variant="Variant.Text" Lines="8" Immediate="true" />
+
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudDatePicker @bind-Value="InfoDate" Label="Date" />
+
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="addConflict">Add Background Info</MudButton>
+
+    </MudItem>
+
+</MudGrid>
+
+
+@inject IClientFacade _facade
+
+@code {
+    public string Description { get; set; }
+    public string InfoDate { get; set; }
+    public string selectedName { get; set; }
+    public IEnumerable<ClientGetDTO> Users { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await _facade.GetAllClientsAsync();
+    }
+
+    private async Task addConflict()
+    {
+        var client = Users.Where(x => x.UserInfo.Name == selectedName).First();
+
+        var info = new BackgroundInfoCreateDTO()
+        {
+            Text = Description,
+            Date = Convert.ToDateTime(InfoDate),
+            ClientId = client.Id
+        };
+
+        await _facade.AddBackgroundInfoAsync(info);
+    }
+}

@@ -1,0 +1,85 @@
+﻿@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.Gear
+@using BLL.DTOs.Objects.ClientConnection
+@using BLL.Facades.Client
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h5">Connections Manager</MudText>
+<MudTable MultiSelection="false" Items="@ConnectionsCollection" @bind-SelectedItem="@selectedItem" Hover="true" SortLabel="Sort By" CommitEditTooltip="Commit Edit" OnCommitEditClick="@updateConnections">
+    <HeaderContent>
+        <MudTh>ID</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Object</MudTh>
+        <MudTh>Subject</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="ID">@context.Id</MudTd>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Object">@context.Object.UserInfo.Name</MudTd>
+        <MudTd DataLabel="Subject">@context.Subject.UserInfo.Name</MudTd>
+    </RowTemplate>
+    <RowEditingTemplate>
+        <MudTd> @context.Id </MudTd>
+        <MudTd>
+            <MudTextField @bind-Value="@context.Description" />
+        </MudTd>
+        <MudTd> @context.Object.UserInfo.Name </MudTd>
+
+        <MudTd> @context.Subject.UserInfo.Name </MudTd>
+    </RowEditingTemplate>
+</MudTable>
+
+<MudGrid>
+    <MudItem xs="12">
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5" Inline="true">Selected ID: @selectedItem?.Id</MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="deleteConnections">Delete Selected Connections</MudButton>
+    </MudItem>
+</MudGrid>
+
+@inject ISnackbar Snackbar
+@inject IClientFacade _clientFacade
+
+@code {
+    [Parameter]
+    public ClientGetDTO Client { get; set; }
+
+    public ClientConnectionGetDTO Connection { get; set; }
+    public IEnumerable<ClientConnectionGetDTO> ConnectionsCollection { get; set; }
+
+    private ClientConnectionGetDTO selectedItem = null;
+    private HashSet<ClientConnectionGetDTO> selectedConnections = new HashSet<ClientConnectionGetDTO>();
+
+
+    protected override void OnInitialized()
+    {
+        ConnectionsCollection = Client.Connections;
+    }
+
+    private async Task deleteConnections()
+    {
+        var selectedItemId = selectedItem.Id;
+        await _clientFacade.DeleteClientConnectionAsync(selectedItem.Id);
+        ConnectionsCollection = ConnectionsCollection.Where(item => item.Id != selectedItemId).ToList();
+        selectedItem = null;
+        Snackbar.Add("Connection with ID " + selectedItemId + " deleted");
+    }
+
+    private async Task updateConnections()
+    {
+        var connection = await _clientFacade.GetClientConnectionAsync(selectedItem.Id);
+        ClientConnectionUpdateDTO updateDTO = new ClientConnectionUpdateDTO()
+        {
+            Id = selectedItem.Id,
+            ObjectId = connection.Object.Id,
+            SubjectId = connection.Subject.Id,
+            Description = selectedItem.Description
+        };
+        await _clientFacade.UpdateClientConnectionAsync(updateDTO);
+        Snackbar.Add("Connection with ID " + selectedItem.Id + " updated");
+
+    }
+}

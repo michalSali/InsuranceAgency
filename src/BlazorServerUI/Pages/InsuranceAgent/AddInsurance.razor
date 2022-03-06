@@ -1,0 +1,106 @@
+﻿@page "/createInsurance"
+@attribute [Authorize(Roles = "InsuranceAgent")]
+@using BLL.DTOs.Objects.InsuranceOffer
+@using BLL.DTOs.Objects.Insurance
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+@using BLL.Facades.Insurance
+@using BLL.Facades.InsuranceAgent
+@using BlazorServerUI.Authentication.Utility
+
+<MudGrid Style="padding: 20px 20px" Spacing="4">
+    <MudItem xs="12">
+        <MudText Typo="Typo.h4">Create Insurance</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <MudSelect T="string" Label="Client" @bind-Value="selectedName">
+            @foreach (var client in Users)
+            {
+                <MudSelectItem Value="@(client.UserInfo.Name)" />
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="12">
+        <MudSelect T="InsuranceOfferGetDTO" Label="Offer" @bind-Value="selectedOffer" ToStringFunc="displayOffer">
+            @foreach (var offer in Offers)
+            {
+                <MudSelectItem Value="@offer"/>
+            }
+        </MudSelect>
+    </MudItem>
+    <MudItem xs="3">
+        <MudDatePicker @bind-Value="CreateDate" Label="Creation date" />
+
+    </MudItem>
+    <MudItem xs="3">
+        <MudDatePicker @bind-Value="ExpirationDate" Label="Expiration date" />
+
+    </MudItem>
+    <MudItem xs="6"></MudItem>
+
+    <MudItem xs="12">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="createOffer">Create Offer</MudButton>
+    </MudItem>
+
+</MudGrid>
+
+
+
+@inject IInsuranceFacade _insuranceFacade
+@inject IClientFacade _clientFacade
+@inject IInsuranceAgentFacade _insuranceAgentFacade
+
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private int id;
+
+    private string CreateDate { get; set; }
+    private string ExpirationDate { get; set; }
+    public string selectedName { get; set; }
+    public InsuranceOfferGetDTO selectedOffer { get; set; }
+
+    public List<ClientGetDTO> Users { get; set; }
+    public List<InsuranceOfferGetDTO> Offers { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await authenticationStateTask).User);
+        Users = (await _clientFacade.GetAllClientsAsync(true, id)).ToList();
+
+        var agent = await _insuranceAgentFacade.GetWithIncludesAsync(id);
+        Offers = (await _insuranceFacade.GetAllInsuranceOffersAsync(agent.Director.Id, true)).ToList();
+        if (Offers == null)
+        {
+            Offers = new List<InsuranceOfferGetDTO>();
+        }
+    }
+
+
+    private async Task createOffer()
+    {
+        var client = Users.Where(x => x.UserInfo.Name == selectedName).First();
+
+        var offer = new InsuranceCreateDTO()
+        {
+            CreationDate = Convert.ToDateTime(CreateDate),
+            ExpirationDate = Convert.ToDateTime(ExpirationDate),
+            ClientId = client.Id,
+            InsuranceOfferId = Convert.ToInt32(selectedOffer)
+        };
+
+        await _insuranceFacade.CreateInsuranceAsync(offer);
+    }
+
+    private string displayOffer(InsuranceOfferGetDTO offer)
+    {
+        if (offer == null)
+        {
+            return "Insurance";
+        }
+        return string.IsNullOrEmpty(offer?.Description) ? "Insurance Offer #" + offer.Id : offer.Description;
+    }
+}

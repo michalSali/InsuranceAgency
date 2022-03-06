@@ -1,0 +1,22 @@
+@using BLL.DTOs.People.User
+
+<Show Headings="@headings.ToList()" Rows="@UsersToStringListRows(Users)" Fixedheader="@fixedheader"/>
+
+@code {
+
+    [Parameter]
+    public List<UserInfoDTO> Users { get; set; }
+    
+    private bool fixedheader = true;
+    private string[] headings = { "Name", "Gender", "Birth"};
+
+    private List<List<string>> UsersToStringListRows(List<UserInfoDTO> users)
+    {
+        return users.Select(u => UserToStringListRow(u)).ToList();
+    }
+
+    private List<string> UserToStringListRow(UserInfoDTO user)
+    {
+        return new List<string>{ user.Name, user.Gender.ToString(), user.Birth.ToString()};
+    }
+}

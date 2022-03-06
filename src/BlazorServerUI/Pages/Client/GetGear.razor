@@ -1,0 +1,47 @@
+﻿@attribute [Authorize(Roles="Client")]
+@using BLL.DTOs.People.Client
+@using BLL.Facades.Client
+@using BlazorServerUI.Authentication.Utility
+
+
+<MudTable Style="padding: 0px 20px" Items="@user.Gears" Hover="true" Dense="true" FixedHeader="true">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Gear Type</MudTh>
+        <MudTh>Value</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@(string.IsNullOrEmpty(context.Name) ? "Default " + context.Type.ToString() : context.Name)</MudTd>
+        <MudTd DataLabel="Gear Type">@context.Type</MudTd>
+        <MudTd DataLabel="Value">@context.Value</MudTd>
+    </RowTemplate>
+</MudTable>
+
+
+@inject IClientFacade _facade;
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    ClientGetDTO user = new ClientGetDTO();
+
+    string[] headings = { "Type", "Value" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        await RefreshUserDataAsync();
+    }
+
+    private async Task RefreshUserDataAsync()
+    {
+        var person = await _facade.GetWithExtendedInfoAsync(id);
+        user.Gears = person.Gears;
+
+    }
+
+}

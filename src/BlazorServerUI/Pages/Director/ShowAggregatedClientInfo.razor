@@ -1,0 +1,167 @@
+﻿@page "/showAggregatedClientInfo"
+@attribute [Authorize(Roles="Director")]
+
+@using BLL.DTOs.People.InsuranceAgent
+@using BLL.DTOs.People.User
+@using BLL.Facades.Client
+@using BLL.Facades.Conflict
+@using BLL.Facades.Director
+@using BLL.DTOs.People.Client
+@using BLL.DTOs.Objects.ConflictInvolvement
+@using BLL.DTOs.Objects.ConflictRecord
+@using Microsoft.AspNetCore.Http.Extensions
+@using BlazorServerUI.Pages.InsuranceAgent.Managers
+@using AutoMapper
+@using BlazorServerUI.Authentication.Utility
+
+<MudItem xs="12" sm="6" md="4">
+    <MudSelect T="ClientGetAggregatedDTO" Label="Client" @bind-Value="selectedClient" ToStringFunc="new Func<ClientGetAggregatedDTO, string>(x => x?.UserInfo?.Name)">
+        @foreach (var client in Clients)
+        {
+            <MudSelectItem Value="@(client)" />
+        }
+    </MudSelect>
+</MudItem>
+
+@if (selectedClient != null)
+{
+    <MudGrid>
+        <MudItem md="8" Class="mud-text-align-center my-auto">
+            <MudCard>
+                <MudCardContent>
+                    <MudText>Name: @(selectedClient.UserInfo.Name)</MudText>
+                    <MudText>Date of Birth: @(selectedClient.UserInfo.Birth)</MudText>
+                    <MudText>Gender: @(selectedClient.UserInfo.Gender)</MudText>
+                </MudCardContent>
+            </MudCard>
+
+            @if (ShowTotalCounts)
+            {
+                <MudCard>
+                    <MudCardContent>
+                        <MudText>Active Conflicts: @(selectedClient.ActiveConflicts)</MudText>
+                        <MudText>Total Conflicts: @(selectedClient.TotalConflicts)</MudText>
+                        <MudText>Active Insurances: @(selectedClient.ActiveInsurances)</MudText>
+                        <MudText>Total Insurances: @(selectedClient.TotalInsurances)</MudText>
+                        <MudText>Total Balance Record: @(selectedClient.TotalBalanceRecord)</MudText>
+                        <MudText>Total Connections: @(selectedClient.ConnectionCount)</MudText>
+                    </MudCardContent>
+                </MudCard>
+            }
+
+            @if (ShowBGInfo)
+            {
+                <MudText Typo="Typo.subtitle2" Align="Align.Center">Background Information</MudText>
+                <MudSimpleTable>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (selectedClient.BackgroundInfos == null || selectedClient.BackgroundInfos.Count == 0)
+                        {
+                            <tr>There is no background information.</tr>
+                        }
+                        else
+                        {
+                            @foreach (var BGInfo in selectedClient.BackgroundInfos)
+                            {
+                                <tr>
+                                    <td>@(BGInfo.Text)</td>
+                                    <td>@(BGInfo.Date)</td>
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+                </MudSimpleTable>
+            }
+
+            @if (ShowGear)
+            {
+                <MudText Typo="Typo.subtitle2" Align="Align.Center">Gear Information</MudText>
+                <MudSimpleTable>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (selectedClient.Gears == null || selectedClient.Gears.Count == 0)
+                        {
+                            <tr>There is no information about gear.</tr>
+                        }
+                        else
+                        {
+                            @foreach (var gear in selectedClient.Gears)
+                            {
+                                <tr>
+                                    <td>@(string.IsNullOrEmpty(gear.Name) ? "Default " + gear.Type : gear.Name)</td>
+                                    <td>@(gear.Type)</td>
+                                    <td>@(gear.Value)</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            }
+
+        </MudItem>
+        <MudItem md="4">
+            <MudCard>
+                <MudCardContent>                    
+                    <MudText Typo="Typo.subtitle2" GutterBottom="true">Display Options</MudText>
+                    <MudCheckBox @bind-Checked="@ShowTotalCounts" Label="Total Counts" Color="Color.Primary" Style="width:100%;" />
+                    <MudCheckBox @bind-Checked="@ShowBGInfo" Label="Background Info" Color="Color.Primary" Style="width:100%;" />
+                    <MudCheckBox @bind-Checked="@ShowGear" Label="Gear" Color="Color.Primary" Style="width:100%;" />
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+}
+
+
+@inject IClientFacade _clientFacade
+@inject IConflictFacade  _conflictFacade
+@inject IDirectorFacade _directorFacade
+@inject NavigationManager _navManager
+@inject IMapper _mapper
+
+@code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private int id;
+
+    public bool ShowTotalCounts { get; set; } = false;
+    public bool ShowBGInfo { get; set; } = false;
+    public bool ShowGear { get; set; } = false;
+
+
+    public ClientGetAggregatedDTO selectedClient { get; set; }
+
+    public IEnumerable<ClientGetAggregatedDTO> Clients { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+       
+        // current user/director's id
+        id = CustomClaimsUtility.ExtractClaimsId((await authenticationStateTask).User);
+        
+        Clients = new List<ClientGetAggregatedDTO>();
+        var agents = (await _directorFacade.GetAsync(id, true)).InsuranceAgents;
+        if (agents != null)
+        {
+            foreach (var agent in agents)
+            {
+                Clients = Clients.Union(await _clientFacade.GetAllClientsAggregatedAsync(agent.Id)).ToList();
+            }
+        }        
+    }
+   
+}

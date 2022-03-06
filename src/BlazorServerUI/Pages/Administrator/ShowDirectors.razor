@@ -1,0 +1,24 @@
+@using BLL.DTOs.People.User
+@using BLL.DTOs.People.Director
+
+<Show Headings="@headings.ToList()" Rows="@DirectorsToStringListRows(Directors)" Fixedheader="@fixedheader"/>
+
+@code {
+
+    [Parameter]
+    public List<DirectorGetDTO> Directors { get; set; }
+    
+    private bool fixedheader = true;
+    string[] headings = { "Name", "Gender", "Birth", "Section"};
+
+    private List<List<string>> DirectorsToStringListRows(List<DirectorGetDTO> directors)
+    {
+        return directors.Select(u => DirectorToStringListRow(u)).ToList();
+    }
+
+    private List<string> DirectorToStringListRow(DirectorGetDTO director)
+    {
+        return new List<string>{ director.UserInfo.Name, director.UserInfo.Gender.ToString(),
+            director.UserInfo.Birth.ToString(), director.Section};
+    }
+}

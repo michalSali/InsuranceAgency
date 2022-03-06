@@ -1,0 +1,50 @@
+@page "/getAllAgents"
+@attribute [Authorize(Roles = "Director")]
+
+@using BLL.Facades.InsuranceAgent
+@using BLL.DTOs.People.InsuranceAgent
+@using BlazorServerUI.Authentication.Utility
+
+<MudText Style="padding: 20px 20px 20px" Typo="Typo.h4">All Insurance Agents</MudText>
+<MudTable Style="padding: 0px 20px" Items="users" Hover="true" Dense="true" FixedHeader="@fixedheader">
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Gender</MudTh>
+        <MudTh>Birth</MudTh>
+
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.UserInfo.Name</MudTd>
+        <MudTd DataLabel="Gender">@context.UserInfo.Gender</MudTd>
+        <MudTd DataLabel="Birth">@context.UserInfo.Birth</MudTd>
+
+    </RowTemplate>
+</MudTable>
+
+@inject IInsuranceAgentFacade _insuranceAgentFacade
+
+@code {
+
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private int id;
+
+    private List<InsuranceAgentGetDTO> users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        id = CustomClaimsUtility.ExtractClaimsId((await AuthenticationStateTask).User);
+        if (users == null)
+        {
+            await refreshUserDataAsync();
+        }
+    }
+
+     private async Task refreshUserDataAsync()
+     {       
+        users = (await _insuranceAgentFacade.GetAllWithIncludesAsync(id)).ToList();
+     }
+
+    bool fixedheader = true;
+}

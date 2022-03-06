@@ -1,0 +1,35 @@
+
+<MudSimpleTable Hover="true" Dense="true" FixedHeader="@Fixedheader" Style="@(Fixedheader ? "height:300px;" : "")">
+    <thead>
+    <tr>
+        @foreach (var h in Headings ?? new List<string>())
+        {
+            <th>@h</th>
+        }
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var row in Rows ?? new List<List<string>>())
+    {
+        <tr>
+            @foreach (var col in row ?? new List<string>())
+            {
+                <td>col</td>
+            }
+        </tr>
+    }
+    </tbody>
+</MudSimpleTable>
+<MudSwitch @bind-Checked="@Fixedheader">Fixed Header</MudSwitch>
+
+@code {
+    
+    [Parameter]
+    public List<List<string>> Rows { get; set; }
+
+    [Parameter]
+    public List<string> Headings { get; set; }
+    
+    [Parameter]
+    public bool Fixedheader { get; set; } = true;
+}
