@@ -1,5 +1,6 @@
 # Paramilitary Groups Insurance Agency
-Adjusted version of my PV179 project for the needs of PA187.
+Adjusted version of my PV179 team project for the needs of PA187.
+Team (based on UČO): 485193, 484940, 485342 (me)
 
 ## File structure
 
